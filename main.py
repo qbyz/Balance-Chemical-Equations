@@ -96,12 +96,15 @@ def solver(reactDic, prodDic, reactParts, prodParts):
     values = dict()
     letters = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
                'V', 'W', 'X', 'Y', 'Z'}
-
+    solved = 0
     for x in reactDic:
-        if x == prodDic[x]:
-            print('yay')
-    #for i in prodParts:
-        #values.update({letters[i]:1})
+        if reactDic.get(x) == prodDic.get(x):
+            solved += 1
 
-solver({'C': 1, 'O': 2}, {'C': 1, 'O': 2}, ['x'], ['y'])
+    if solved == len(reactDic):
+        return 'balanced'
+    for i in prodParts:
+        values.update({letters[i]:1})
+
+print(solver({'C': 1, 'O': 2}, {'C': 1, 'O': 2}, ['x'], ['y']))
 print(inputHandling(ogString))
