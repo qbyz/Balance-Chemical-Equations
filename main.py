@@ -146,5 +146,7 @@ def solver(reactDic, prodDic, reactParts, prodParts):
     for i in prodParts:
         values.update({letters[i]:1})
 
-print(solver({'C': 1, 'O': 2}, {'C': 1, 'O': 2}, ['x'], ['y']))
+reactantDict, productDict, reactantParts, productParts = inputHandling(ogString)
+
+print(solver(reactantDict, productDict, reactantParts, productParts))
 print(inputHandling(ogString))
