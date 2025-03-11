@@ -26,6 +26,9 @@ def inputHandling(firstEquation):
                 continue
 
             # If there is more than one of an atom in the compound
+            constants = 1
+            if reactantSplit[x][0].isdigit():
+                constants = int(reactantSplit[x][0])
             if '^' in reactantSplit[x]:
                 if y > 0 and y < len(reactantSplit[x]):
                     if reactantSplit[x][y] == '^':
@@ -37,9 +40,7 @@ def inputHandling(firstEquation):
                             # Two-letter element (like 'Cl' in 'ZnCl^2')
                             else:
                                 existing = reactantDict.get(f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}')
-                                reactantDict.update({
-                                                        f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': existing + int(
-                                                            reactantSplit[x][y + 1])})
+                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': existing + int(reactantSplit[x][y + 1])})
                         else:
                             # Single letter element
                             if reactantSplit[x][y - 1] not in reactantDict:
@@ -55,21 +56,21 @@ def inputHandling(firstEquation):
                     # Check if this is already processed by ^ handling
                     if y + 2 >= len(reactantSplit[x]) or reactantSplit[x][y + 2] != '^':
                         if f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}' not in reactantDict:
-                            reactantDict.update({f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}': 1})
+                            reactantDict.update({f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}': constants})
                         else:
                             existing = reactantDict.get(f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}')
-                            reactantDict.update({f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}': existing + 1})
+                            reactantDict.update({f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}': existing + constants})
 
                         skip_next = True
                 # Single letter element not followed by ^
                 elif y + 1 >= len(reactantSplit[x]) or reactantSplit[x][y + 1] != '^':
 
                     if reactantSplit[x][y] not in reactantDict:
-                        reactantDict.update({reactantSplit[x][y]: 1})
+                        reactantDict.update({reactantSplit[x][y]: constants})
 
                     else:
                         existing = reactantDict.get(reactantSplit[x][y])
-                        reactantDict.update({reactantSplit[x][y]: existing + 1})
+                        reactantDict.update({reactantSplit[x][y]: existing + constants})
 
     for i in range(len(products)):
         # Remove spaces first, then convert to list
@@ -85,6 +86,9 @@ def inputHandling(firstEquation):
                 skip_next = False
                 continue
 
+            constants = 1
+            if productSplit[x][0].isdigit():
+                constants = int(productSplit[x][0])
             # If there is more than one of an atom in the compound
             if '^' in productSplit[x]:
                 if y > 0 and y < len(productSplit[x]):
@@ -112,21 +116,21 @@ def inputHandling(firstEquation):
                     # Check if this is already processed by ^ handling
                     if y + 2 >= len(productSplit[x]) or productSplit[x][y + 2] != '^':
                         if f'{productSplit[x][y]}{productSplit[x][y + 1]}' not in productDict:
-                            productDict.update({f'{productSplit[x][y]}{productSplit[x][y + 1]}': 1})
+                            productDict.update({f'{productSplit[x][y]}{productSplit[x][y + 1]}': constants})
                         else:
                             existing = productDict.get(f'{productSplit[x][y]}{productSplit[x][y + 1]}')
-                            productDict.update({f'{productSplit[x][y]}{productSplit[x][y + 1]}': existing + 1})
+                            productDict.update({f'{productSplit[x][y]}{productSplit[x][y + 1]}': existing + constants})
 
                         skip_next = True
                 # Single letter element not followed by ^
                 elif y + 1 >= len(productSplit[x]) or productSplit[x][y + 1] != '^':
 
                     if productSplit[x][y] not in productDict:
-                        productDict.update({productSplit[x][y]: 1})
+                        productDict.update({productSplit[x][y]: constants})
 
                     else:
                         existing = productDict.get(productSplit[x][y])
-                        productDict.update({productSplit[x][y]: existing + 1})
+                        productDict.update({productSplit[x][y]: existing + constants})
 
 
     return reactantDict, productDict, reactantSplit, productSplit
