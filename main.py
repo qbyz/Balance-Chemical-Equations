@@ -39,7 +39,43 @@ def oneSide(side):
                 i += 1
             polyco = int(polyco)
             for x in range(actStart, len(comp)-1):
+
                 if x > comp.index(')') or x < comp.index('('):
-                    if x < len(comp)-1 and comp[x].isuppper() and comp[x+1].islower() and f'{comp[x]}{comp[x+1]}' in sideVals[counter] and '^' not in comp:
+
+                    # If 2 letter, in dictionary already, and there are no ^s
+                    if x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and f'{comp[x]}{comp[x+1]}' in sideVals[counter] and '^' not in comp:
                         existing = int(sideVals[counter].get(f'{comp[x]}{comp[x+1]}'))
-                        sideVals[counter].update(f'{comp[x]}{comp[x+1]}': existing + const)
+                        sideVals[counter].update({f'{comp[x]}{comp[x+1]}': existing + const})
+
+                    # If 2 letter, not in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and '^' not in comp:
+                        sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': const})
+
+                    # If 1 letter, in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x] in sideVals[counter] and '^' not in comp:
+                        existing = int(sideVals[counter].get(comp[x]))
+                        sideVals[counter].update({comp[x]: const + existing})
+
+                    # If 1 letter, not in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and '^' not in comp:
+                        sideVals[counter].update({comp[x]: const})
+
+                    # Start of ^s
+
+                    # If 2 letter, in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and f'{comp[x]}{comp[x + 1]}' in sideVals[counter]:
+                        existing = int(sideVals[counter].get(f'{comp[x]}{comp[x + 1]}'))
+                        sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': existing + const})
+
+                    # If 2 letter, not in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower():
+                        sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': const})
+
+                    # If 1 letter, in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x] in sideVals[counter]:
+                        existing = int(sideVals[counter].get(comp[x]))
+                        sideVals[counter].update({comp[x]: const + existing})
+
+                    # If 1 letter, not in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper():
+                        sideVals[counter].update({comp[x]: const})
