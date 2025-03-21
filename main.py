@@ -13,9 +13,21 @@ def oneSide(side):
         sideSplit.append(list(side[i].replace(" ", "")))
         sideVals.append(dict())
 
+    counter = 0
     for comp in sideSplit:
         skipNext = False
         poly = False
+
+        coStr = ''
+
+        i = 0
+        while i < len(comp) and comp[i].isdigit():
+            coStr += comp[i]
+            i += 1
+        const = int(coStr)
+        actStart = i
+        sideConsts.append(const)
+
 
         if '(' in comp and ')' in comp:
             poly = True
@@ -26,14 +38,8 @@ def oneSide(side):
                 polyco += comp[i]
                 i += 1
             polyco = int(polyco)
-            for
-
-        coStr = ''
-
-        i = 0
-        while i < len(comp) and comp[i].isdigit():
-            coStr += comp[i]
-            i += 1
-        const = int(coStr)
-        sideConsts.append(const)
-
+            for x in range(actStart, len(comp)-1):
+                if x > comp.index(')') or x < comp.index('('):
+                    if x < len(comp)-1 and comp[x].isuppper() and comp[x+1].islower() and f'{comp[x]}{comp[x+1]}' in sideVals[counter] and '^' not in comp:
+                        existing = int(sideVals[counter].get(f'{comp[x]}{comp[x+1]}'))
+                        sideVals[counter].update(f'{comp[x]}{comp[x+1]}': existing + const)
