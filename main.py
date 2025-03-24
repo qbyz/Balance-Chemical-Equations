@@ -2,7 +2,8 @@ ogString = input("Enter the Equation (Write ^x for any subscript):")
 
 # H(CO)^2 = H + C^2 + O^2
 sides = ogString.split('=')
-reactants = ogString[0].split('+')
+reactants = sides[0].split('+')
+products = sides[1].split('+')
 
 def oneSide(side):
     sideSplit = []
@@ -14,6 +15,8 @@ def oneSide(side):
         # Remove spaces first, then convert to list
         sideSplit.append(list(side[i].replace(" ", "")))
         sideVals.append(dict())
+
+    print(f"sideSplit: {sideSplit}")
 
     counter = 0
     for comp in sideSplit:
@@ -33,32 +36,39 @@ def oneSide(side):
         actStart = i
         sideConsts.append(const)
 
+        print(f"Component: {comp}, Constant: {const}")
 
         if '(' in comp and ')' in comp:
-            poly = True
             i = comp.index(')') + 2
 
             polyco = ''
-            while i > len(comp) and comp[i].isdigit():
+            while i < len(comp) and comp[i].isdigit():
                 polyco += comp[i]
                 i += 1
             polyco = int(polyco)
+
             for x in range(actStart, len(comp)-1):
                 if x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower():
                     i = x + 3
                     multiple = ''
-                    while i > len(comp) and comp[i].isdigit():
+                    while i < len(comp) and comp[i].isdigit():
                         multiple += comp[i]
                         i += 1
-                    multiple = int(multiple)
+                    if multiple == '':
+                        multiple = 1
+                    else:
+                        multiple = int(multiple)
 
                 else:
                     i = x + 2
                     multiple = ''
-                    while i > len(comp) and comp[i].isdigit():
+                    while i < len(comp) and comp[i].isdigit():
                         multiple += comp[i]
                         i += 1
-                    multiple = int(multiple)
+                    if multiple == '':
+                        multiple = 1
+                    else:
+                        multiple = int(multiple)
 
                 if x > comp.index(')') or x < comp.index('('):
 
@@ -113,12 +123,12 @@ def oneSide(side):
                     # If 2 letter, in dictionary, and '^' doesn't follow
                     elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and comp[
                         x + 2] and f'{comp[x]}{comp[x + 1]}' not in sideVals[counter] and comp[x + 3] != '^':
-                        existing = sideVals.get(f'{comp[x]}{comp[x + 1]}')
+                        existing = sideVals[counter].get(f'{comp[x]}{comp[x + 1]}')
                         sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': existing + (const * polyco)})
 
                     # If 1 letter, in dictionary, and '^' doesn't follow
                     elif x < len(comp) - 1 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x + 2] != '^':
-                        existing = sideVals.get(comp[x])
+                        existing = sideVals[counter].get(comp[x])
                         sideVals[counter].update({comp[x]: existing + (const * polyco)})
 
                     # '^' follows
@@ -133,14 +143,78 @@ def oneSide(side):
 
                     # If 2 letter, in dictionary, and '^' follows
                     elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and comp[x + 2] and f'{comp[x]}{comp[x + 1]}' not in sideVals[counter] and comp[x + 3] == '^':
-                        existing = sideVals.get(f'{comp[x]}{comp[x + 1]}')
+                        existing = sideVals[counter].get(f'{comp[x]}{comp[x + 1]}')
                         sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': existing + (const * polyco * multiple)})
 
                     # If 1 letter, in dictionary, and '^' follows
                     elif x < len(comp) - 1 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x + 2] == '^':
-                        existing = sideVals.get(comp[x])
+                        existing = sideVals[counter].get(comp[x])
                         sideVals[counter].update({comp[x]: existing + (const * polyco * multiple)})
+        else:
+
+            for x in range(actStart, len(comp)-1):
+                if x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower():
+                    i = x + 3
+                    multiple = ''
+                    while i < len(comp) and comp[i].isdigit():
+                        multiple += comp[i]
+                        i += 1
+                    if multiple == '':
+                        multiple = 1
+                    else:
+                        multiple = int(multiple)
+
+                else:
+                    i = x + 2
+                    multiple = ''
+                    while i < len(comp) and comp[i].isdigit():
+                        multiple += comp[i]
+                        i += 1
+                    if multiple == '':
+                        multiple = 1
+                    else:
+                        multiple = int(multiple)
+
+                    # If 2 letter, in dictionary already, and there are no ^s
+                    if x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and f'{comp[x]}{comp[x+1]}' in sideVals[counter] and comp[x+2] != '^':
+                        existing = int(sideVals[counter].get(f'{comp[x]}{comp[x+1]}'))
+                        sideVals[counter].update({f'{comp[x]}{comp[x+1]}': existing + const})
+
+                    # If 2 letter, not in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and comp[x+2] != '^':
+                        sideVals[counter][f'{comp[x]}{comp[x + 1]}'] = const
+
+                    # If 1 letter, in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x] in sideVals[counter] and comp[x+2] != '^':
+                        existing = int(sideVals[counter].get(comp[x]))
+                        sideVals[counter].update({[comp[x]] : const + existing})
+
+                    # If 1 letter, not in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+2] != '^':
+                        sideVals[counter][comp[x]] = const
+
+                    # Start of ^s
+
+                    # If 2 letter, in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and f'{comp[x]}{comp[x + 1]}' in sideVals[counter] and comp[x+2] == '^':
+                        existing = int(sideVals[counter].get(f'{comp[x]}{comp[x + 1]}'))
+                        sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': existing + (const * multiple)})
+
+                    # If 2 letter, not in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and comp[x+2] == '^':
+                        sideVals[counter][comp[x]+comp[x + 1]] = const * multiple
+
+                    # If 1 letter, in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x] in sideVals[counter] and comp[x+2] == '^':
+                        existing = int(sideVals[counter].get(comp[x]))
+                        sideVals[counter].update({comp[x]: (const * multiple) + existing})
+
+                    # If 1 letter, not in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x+2] == '^':
+                        sideVals[counter][comp[x]] = const * multiple
+        counter += 1
 
     return sideVals
 
 print(oneSide(reactants))
+print(oneSide(products))
