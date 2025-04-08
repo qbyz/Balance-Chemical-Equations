@@ -47,7 +47,7 @@ def oneSide(side):
                 i += 1
             polyco = int(polyco)
 
-            for x in range(actStart, len(comp)-1):
+            for x in range(actStart, len(comp)):
                 if x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower():
                     i = x + 3
                     multiple = ''
@@ -151,8 +151,16 @@ def oneSide(side):
                         existing = sideVals[counter].get(comp[x])
                         sideVals[counter].update({comp[x]: existing + (const * polyco * multiple)})
         else:
+            print(f"Component 1: {comp}, Constant: {const}")
+            for x in range(actStart, len(comp)):
+                if x == len(comp) - 1:
+                    if comp[x].isupper():
+                        if comp[x] in sideVals[counter]:
+                            sideVals[counter][comp[x]] += const
+                        else:
+                            sideVals[counter][comp[x]] = const
+                    continue
 
-            for x in range(actStart, len(comp)-1):
                 if x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower():
                     i = x + 3
                     multiple = ''
@@ -175,8 +183,11 @@ def oneSide(side):
                     else:
                         multiple = int(multiple)
 
+                    if len(comp) == 1:
+                        sideVals[counter][comp[x]] = const
+
                     # If 2 letter, in dictionary already, and there are no ^s
-                    if x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and f'{comp[x]}{comp[x+1]}' in sideVals[counter] and comp[x+2] != '^':
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and f'{comp[x]}{comp[x+1]}' in sideVals[counter] and comp[x+2] != '^':
                         existing = int(sideVals[counter].get(f'{comp[x]}{comp[x+1]}'))
                         sideVals[counter].update({f'{comp[x]}{comp[x+1]}': existing + const})
 
@@ -185,12 +196,12 @@ def oneSide(side):
                         sideVals[counter][f'{comp[x]}{comp[x + 1]}'] = const
 
                     # If 1 letter, in dictionary already, and there are no ^s
-                    elif x < len(comp)-1 and comp[x].isupper() and comp[x] in sideVals[counter] and comp[x+2] != '^':
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x] in sideVals[counter] and comp[x+1] != '^':
                         existing = int(sideVals[counter].get(comp[x]))
                         sideVals[counter].update({[comp[x]] : const + existing})
 
                     # If 1 letter, not in dictionary already, and there are no ^s
-                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+2] != '^':
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+1] != '^':
                         sideVals[counter][comp[x]] = const
 
                     # Start of ^s
@@ -205,16 +216,46 @@ def oneSide(side):
                         sideVals[counter][comp[x]+comp[x + 1]] = const * multiple
 
                     # If 1 letter, in dictionary already, and there are ^s
-                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x] in sideVals[counter] and comp[x+2] == '^':
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x] in sideVals[counter] and comp[x+1] == '^':
                         existing = int(sideVals[counter].get(comp[x]))
                         sideVals[counter].update({comp[x]: (const * multiple) + existing})
 
                     # If 1 letter, not in dictionary already, and there are ^s
-                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x+2] == '^':
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x+1] == '^':
                         sideVals[counter][comp[x]] = const * multiple
         counter += 1
 
     return sideVals
+def mergeDicts(dicts):
+    print('Merging...')
+    result = dict()
+    for i in dicts:
+        for j in i:
+            if j in result:
+                result.update({j: i.get(j) + result.get(j)})
+            else:
+                result[j] = i.get(j)
 
-print(oneSide(reactants))
-print(oneSide(products))
+    return result
+
+def solveCheck(check1, check2):
+
+    print('Checking')
+    if check1 == check2:
+        return True
+    else:
+        return False
+def createEquation(reacts, prods):
+    reactElements = mergeDicts(reacts)
+    prodElements = mergeDicts(prods)
+    elementList = list()
+    elementList.append(reactElements)
+    elementList.append(prodElements)
+    elements = mergeDicts(elementList)
+
+    for i in elements:
+        for j in 
+
+
+print(solveCheck(oneSide(reactants), oneSide(products)))
+
