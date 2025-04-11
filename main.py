@@ -248,14 +248,43 @@ def solveCheck(check1, check2):
 def createEquation(reacts, prods):
     reactElements = mergeDicts(reacts)
     prodElements = mergeDicts(prods)
-    elementList = list()
-    elementList.append(reactElements)
-    elementList.append(prodElements)
-    elements = mergeDicts(elementList)
+    elementList = reacts + prods
+    elements = mergeDicts(list(reactElements) + list(prodElements))
+    totals = list(mergeDicts(prods)) + list(mergeDicts(prods))
+    vectList = [[] for i in range(len(elementList))]
+    for i in elementList:
+        for j in range(0, len(elements)):
+            if elements[j] in i:
+                vectList[j].append(int(i.get(elementList[j])))
+            else:
+                vectList[j].append(0)
+    return vectList
 
-    for i in elements:
-        for j in 
 
+def createEquation(reacts, prods):
+    # Combine reactant and product dictionaries into one list; order is preserved.
+    compoundList = reacts + prods
 
-print(solveCheck(oneSide(reactants), oneSide(products)))
+    # Get the union (merged dictionary) of all compound dictionaries.
+    # Then extract the keys (unique element symbols) in a list.
+    uniqueElements = list(mergeDicts(compoundList).keys())
 
+    # Initialize a matrix with one row per unique element.
+    # Each row will eventually have one entry per compound in compoundList.
+    matrix = [[] for _ in range(len(uniqueElements))]
+
+    # Loop over each compound in our list...
+    for compound in compoundList:
+        # For each unique element, insert the count (or 0 if missing)
+        for i, elem in enumerate(uniqueElements):
+            matrix[i].append(int(compound.get(elem, 0)))
+
+    return matrix, uniqueElements, compoundList
+
+# Example usage:
+matrix, uniqueElements, compoundList = createEquation(oneSide(reactants), oneSide(products))
+print("Unique Elements:", uniqueElements)
+print("Compound List:", compoundList)
+print("Matrix:")
+for row in matrix:
+    print(row)
