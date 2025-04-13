@@ -1,3 +1,5 @@
+from sympy import Matrix, lcm
+
 ogString = input("Enter the Equation (Write ^x for any subscript):")
 
 # H(CO)^2 = H + C^2 + O^2
@@ -45,7 +47,10 @@ def oneSide(side):
             while i < len(comp) and comp[i].isdigit():
                 polyco += comp[i]
                 i += 1
-            polyco = int(polyco)
+            if polyco == '':
+                polyco = 1
+            else:
+                polyco = int(polyco)
 
             for x in range(actStart, len(comp)):
                 if x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower():
@@ -117,7 +122,7 @@ def oneSide(side):
                         sideVals[counter][f'{comp[x]}{comp[x+1]}'] = const * polyco
 
                     # If 1 letter, not in dictionary, and '^' doesn't follow
-                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x+2] != '^':
+                    elif x < len(comp)-2 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x+2] != '^':
                         sideVals[counter][comp[x]] = const * polyco
 
                     # If 2 letter, in dictionary, and '^' doesn't follow
@@ -127,7 +132,7 @@ def oneSide(side):
                         sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': existing + (const * polyco)})
 
                     # If 1 letter, in dictionary, and '^' doesn't follow
-                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x + 2] != '^':
+                    elif x < len(comp) - 2 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x + 2] != '^':
                         existing = sideVals[counter].get(comp[x])
                         sideVals[counter].update({comp[x]: existing + (const * polyco)})
 
@@ -138,7 +143,7 @@ def oneSide(side):
                         sideVals[counter][f'{comp[x]}{comp[x + 1]}'] = const * polyco * multiple
 
                     # If 1 letter, not in dictionary, and '^' follows
-                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x + 2] == '^':
+                    elif x < len(comp) - 2 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x + 2] == '^':
                         sideVals[counter][comp[x]] = const * polyco * multiple
 
                     # If 2 letter, in dictionary, and '^' follows
@@ -271,20 +276,38 @@ def createEquation(reacts, prods):
 
     # Initialize a matrix with one row per unique element.
     # Each row will eventually have one entry per compound in compoundList.
-    matrix = [[] for _ in range(len(uniqueElements))]
+    equations = [[] for _ in range(len(compoundList))]
 
     # Loop over each compound in our list...
-    for compound in compoundList:
+    for j, compound in enumerate(compoundList):
         # For each unique element, insert the count (or 0 if missing)
         for i, elem in enumerate(uniqueElements):
-            matrix[i].append(int(compound.get(elem, 0)))
+            equations[j].append(int(compound.get(elem, 0)))
 
-    return matrix, uniqueElements, compoundList
+    return equations, compoundList
+
+def solver(eqs):
+    matrix = Matrix(eqs).transpose()
+
+    nullSpace = matrix.nullspace()
+
+    solution = nullSpace[0]
+
+    lcmList = lcm([i.q for i in solution])
+
+    solution = [int(i * lcmList) for i in solution]
+
+    return solution
 
 # Example usage:
-matrix, uniqueElements, compoundList = createEquation(oneSide(reactants), oneSide(products))
-print("Unique Elements:", uniqueElements)
+matrix, compoundList = createEquation(oneSide(reactants), oneSide(products))
 print("Compound List:", compoundList)
-print("Matrix:")
-for row in matrix:
-    print(row)
+print(f'split value:{len(oneSide(reactants))-1}')
+print(matrix[len(oneSide(reactants))-1])
+i = len(oneSide(reactants))
+while i < len(matrix):
+    for j in range(len(matrix[i])):
+        matrix[i][j] *= -1
+    print(f'products: {matrix[i]}')
+    i+=1
+print(solver(matrix))
