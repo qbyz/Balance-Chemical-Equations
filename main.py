@@ -1,639 +1,313 @@
+from sympy import Matrix, lcm
+
 ogString = input("Enter the Equation (Write ^x for any subscript):")
 
+# H(CO)^2 = H + C^2 + O^2
+sides = ogString.split('=')
+reactants = sides[0].split('+')
+products = sides[1].split('+')
 
-def inputHandling(firstEquation):
-    # Split Reaction into 2 Sides
-    sides = firstEquation.split('=')
-    reactants = sides[0].split('+')
-    reactantSplit = []
-    reactantConsts = []
-
-    products = sides[1].split('+')
-    productSplit = []
-    productConsts = []
+def oneSide(side):
+    sideSplit = []
+    sideConsts = []
+    sideDict = dict()
     polyDict = dict()
-    # Parse Reactants into Lists
-    for i in range(len(reactants)):
+    sideVals = []
+    for i in range(len(side)):
         # Remove spaces first, then convert to list
-        reactantSplit.append(list(reactants[i].replace(" ", "")))
+        sideSplit.append(list(side[i].replace(" ", "")))
+        sideVals.append(dict())
 
-    reactantDict = dict()
+    print(f"sideSplit: {sideSplit}")
 
-    # Parse Reactant List into Dictionary with Values
-    for x in range(len(reactantSplit)):
-        skip_next = False
-        constants = 1
-        if reactantSplit[x][0].isdigit():
-            constants = int(reactantSplit[x][0])
+    counter = 0
+    for comp in sideSplit:
+        skipNext = False
+        poly = False
 
-        reactantConsts.append(constants)
-        for y in range(len(reactantSplit[x])):
-            if skip_next:
-                skip_next = False
-                continue
+        coStr = ''
 
-            polyatomic = False
-            polyconstants = 1
+        i = 0
+        while i < len(comp) and comp[i].isdigit():
+            coStr += comp[i]
+            i += 1
+        if coStr != '':
+            const = int(coStr)
+        else:
+            const = 1
+        actStart = i
+        sideConsts.append(const)
 
-            # If there is more than one of an atom in the compound
-            if '^' in reactantSplit[x] and '(' not in reactantSplit[x]:
-                if y > 0 and y < len(reactantSplit[x]):
-                    if reactantSplit[x][y] == '^':
-                        # Check if character before ^ is uppercase (single element) or lowercase (part of two-letter element)
-                        if reactantSplit[x][y - 1].islower() and y > 1:
-                            if f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}' not in reactantDict:
-                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': int(
-                                    reactantSplit[x][y + 1])*constants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = reactantDict.get(f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}')
-                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': existing + (int(reactantSplit[x][y + 1])*constants)})
-                        else:
-                            # Single letter element
-                            if reactantSplit[x][y - 1] not in reactantDict:
-                                reactantDict.update({reactantSplit[x][y - 1]: int(reactantSplit[x][y + 1])*constants})
-                            else:
-                                existing = reactantDict.get(reactantSplit[x][y - 1])
-                                reactantDict.update({reactantSplit[x][y - 1]: existing + (int(reactantSplit[x][y + 1])*constants)})
-            elif '^' in reactantSplit[x]:
-                if y > 0 and y < len(reactantSplit[x]):
-                    if reactantSplit[x][y] == '(':
-                        polyatomic = True
-                    if reactantSplit[x][reactantSplit[x].index(')') + 1] == '^':
-                        polyconstants = reactantSplit[x][reactantSplit[x].index(')')+2]
+        print(f"Component: {comp}, Constant: {const}")
 
-                    if reactantSplit[x][y] == '^' and not polyatomic:
-                        # Check if character before ^ is uppercase (single element) or lowercase (part of two-letter element)
-                        if reactantSplit[x][y - 1].islower() and y > 1:
-                            if f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}' not in reactantDict:
-                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': int(reactantSplit[x][y + 1])*constants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = reactantDict.get(f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}')
-                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': existing + (int(reactantSplit[x][y + 1])*constants)})
-                        else:
-                            # Single letter element
-                            if reactantSplit[x][y - 1] not in reactantDict:
-                                reactantDict.update({reactantSplit[x][y - 1]: int(reactantSplit[x][y + 1])*constants})
-                            else:
-                                existing = reactantDict.get(reactantSplit[x][y - 1])
-                                reactantDict.update({reactantSplit[x][y - 1]: existing + (int(reactantSplit[x][y + 1])*constants)})
-                    if y < reactantSplit[x].index('(') and y < reactantSplit[x].index(')'):
-                        if reactantSplit[x][y - 1].islower() and y > 1:
-                            if f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}' not in reactantDict:
-                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': int(
-                                reactantSplit[x][y + 1])*constants * polyconstants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = reactantDict.get(f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}')
-                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': existing + (int(reactantSplit[x][y + 1])*constants * polyconstants)})
-                        else:
-                            # Single letter element
-                            if reactantSplit[x][y - 1] not in reactantDict:
-                                reactantDict.update({reactantSplit[x][y - 1]: int(reactantSplit[x][y + 1])*constants * polyconstants})
-                            else:
-                                existing = reactantDict.get(reactantSplit[x][y - 1])
-                                reactantDict.update({reactantSplit[x][y - 1]: existing + (int(reactantSplit[x][y + 1])*constants * polyconstants)})
+        if '(' in comp and ')' in comp:
+            i = comp.index(')') + 2
 
-            # Handle elements without subscripts
-            if y < len(reactantSplit[x]) and reactantSplit[x][y].isupper() and '(' not in reactantSplit[x]:
-                # Check if this is followed by a lowercase letter (two-letter element)
-                if y + 1 < len(reactantSplit[x]) and reactantSplit[x][y + 1].islower():
-                    # Check if this is already processed by ^ handling
-                    if y + 2 >= len(reactantSplit[x]) or reactantSplit[x][y + 2] != '^':
-                        if f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}' not in reactantDict:
-                            reactantDict.update({f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}': constants})
-                        else:
-                            existing = reactantDict.get(f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}')
-                            reactantDict.update({f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}': existing + constants})
+            polyco = ''
+            while i < len(comp) and comp[i].isdigit():
+                polyco += comp[i]
+                i += 1
+            if polyco == '':
+                polyco = 1
+            else:
+                polyco = int(polyco)
 
-                        skip_next = True
-                # Single letter element not followed by ^
-                elif y + 1 >= len(reactantSplit[x]) or reactantSplit[x][y + 1] != '^':
-
-                    if reactantSplit[x][y] not in reactantDict:
-                        reactantDict.update({reactantSplit[x][y]: constants})
-
+            for x in range(actStart, len(comp)):
+                if x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower():
+                    i = x + 3
+                    multiple = ''
+                    while i < len(comp) and comp[i].isdigit():
+                        multiple += comp[i]
+                        i += 1
+                    if multiple == '':
+                        multiple = 1
                     else:
-                        existing = reactantDict.get(reactantSplit[x][y])
-                        reactantDict.update({reactantSplit[x][y]: existing + constants})
+                        multiple = int(multiple)
 
-    for i in range(len(products)):
-        # Remove spaces first, then convert to list
-        productSplit.append(list(products[i].replace(" ", "")))
-
-    productDict = dict()
-
-    # Using the same improved logic for products
-    for x in range(len(productSplit)):
-        skip_next = False
-        constants = 1
-        if productSplit[x][0].isdigit():
-            constants = int(productSplit[x][0])
-
-        productConsts.append(constants)
-        for y in range(len(productSplit[x])):
-            if skip_next:
-                skip_next = False
-                continue
-
-            # If there is more than one of an atom in the compound
-            if '^' in productSplit[x]:
-                if y > 0 and y < len(productSplit[x]):
-                    if productSplit[x][y] == '^':
-                        # Check if character before ^ is uppercase (single element) or lowercase (part of two-letter element)
-                        if productSplit[x][y - 1].islower() and y > 1:
-                            if f'{productSplit[x][y - 2]}{productSplit[x][y - 1]}' not in productDict:
-                                productDict.update({f'{productSplit[x][y - 2]}{productSplit[x][y - 1]}': int(productSplit[x][y + 1])*constants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = productDict.get(f'{productSplit[x][y - 2]}{productSplit[x][y - 1]}')
-                                productDict.update({f'{productSplit[x][y - 2]}{productSplit[x][y - 1]}': existing + (int(productSplit[x][y + 1])*constants)})
-                        else:
-                            # Single letter element
-                            if productSplit[x][y-1] not in productDict:
-                                productDict.update({productSplit[x][y - 1]: int(productSplit[x][y + 1])*constants})
-                            else:
-                                existing = productDict.get(productSplit[x][y-1])
-                                productDict.update({productSplit[x][y - 1]: existing + (int(productSplit[x][y + 1])*constants)})
-
-            # Handle elements without subscripts
-            if y < len(productSplit[x]) and productSplit[x][y].isupper():
-                # Check if this is followed by a lowercase letter (two-letter element)
-                if y + 1 < len(productSplit[x]) and productSplit[x][y + 1].islower():
-                    # Check if this is already processed by ^ handling
-                    if y + 2 >= len(productSplit[x]) or productSplit[x][y + 2] != '^':
-                        if f'{productSplit[x][y]}{productSplit[x][y + 1]}' not in productDict:
-                            productDict.update({f'{productSplit[x][y]}{productSplit[x][y + 1]}': constants})
-                        else:
-                            existing = productDict.get(f'{productSplit[x][y]}{productSplit[x][y + 1]}')
-                            productDict.update({f'{productSplit[x][y]}{productSplit[x][y + 1]}': existing + constants})
-
-                        skip_next = True
-                # Single letter element not followed by ^
-                elif y + 1 >= len(productSplit[x]) or productSplit[x][y + 1] != '^':
-
-                    if productSplit[x][y] not in productDict:
-                        productDict.update({productSplit[x][y]: constants})
-
+                else:
+                    i = x + 2
+                    multiple = ''
+                    while i < len(comp) and comp[i].isdigit():
+                        multiple += comp[i]
+                        i += 1
+                    if multiple == '':
+                        multiple = 1
                     else:
-                        existing = productDict.get(productSplit[x][y])
-                        productDict.update({productSplit[x][y]: existing + constants})
+                        multiple = int(multiple)
 
+                if x > comp.index(')') or x < comp.index('('):
 
-    return reactantDict, productDict, reactantSplit, productSplit, reactantConsts, productConsts
+                    # If 2 letter, in dictionary already, and there are no ^s
+                    if x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and f'{comp[x]}{comp[x+1]}' in sideVals[counter] and comp[x+2] != '^':
+                        existing = int(sideVals[counter].get(f'{comp[x]}{comp[x+1]}'))
+                        sideVals[counter].update({f'{comp[x]}{comp[x+1]}': existing + const})
 
-def reCheck(reactDic, prodDic, prodParts, reactParts):
-    reactantConsts = []
-    productConsts = []
+                    # If 2 letter, not in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and comp[x+2] != '^':
+                        sideVals[counter][f'{comp[x]}{comp[x + 1]}'] = const
 
-    for x in range(len(reactParts)):
-        skip_next = False
-        for y in range(len(reactParts[x])):
-            if skip_next:
-                skip_next = False
-                continue
+                    # If 1 letter, in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x] in sideVals[counter] and comp[x+2] != '^':
+                        existing = int(sideVals[counter].get(comp[x]))
+                        sideVals[counter].update({[comp[x]] : const + existing})
 
-            # If there is more than one of an atom in the compound
-            constants = 1
-            if reactParts[x][0].isdigit():
-                constants = int(reactParts[x][0])
+                    # If 1 letter, not in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+2] != '^':
+                        sideVals[counter][comp[x]] = const
 
-            reactantConsts.append(constants)
+                    # Start of ^s
 
-            if '^' in reactParts[x]:
-                if y > 0 and y < len(reactParts[x]):
-                    if reactParts[x][y] == '^':
-                        # Check if character before ^ is uppercase (single element) or lowercase (part of two-letter element)
-                        if reactParts[x][y - 1].islower() and y > 1:
-                            if f'{reactParts[x][y - 2]}{reactParts[x][y - 1]}' not in reactantDict:
-                                reactantDict.update({f'{reactParts[x][y - 2]}{reactParts[x][y - 1]}': int(
-                                    reactParts[x][y + 1]) * constants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = reactantDict.get(f'{reactParts[x][y - 2]}{reactParts[x][y - 1]}')
-                                reactantDict.update({f'{reactParts[x][y - 2]}{reactParts[x][y - 1]}': existing + (constants * int(reactParts[x][y + 1]))})
+                    # If 2 letter, in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and f'{comp[x]}{comp[x + 1]}' in sideVals[counter] and comp[x+2] == '^':
+                        existing = int(sideVals[counter].get(f'{comp[x]}{comp[x + 1]}'))
+                        sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': existing + (const * multiple)})
+
+                    # If 2 letter, not in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and comp[x+2] == '^':
+                        sideVals[counter][comp[x]+comp[x + 1]] = const * multiple
+
+                    # If 1 letter, in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x] in sideVals[counter] and comp[x+2] == '^':
+                        existing = int(sideVals[counter].get(comp[x]))
+                        sideVals[counter].update({comp[x]: (const * multiple) + existing})
+
+                    # If 1 letter, not in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x+2] == '^':
+                        sideVals[counter][comp[x]] = const * multiple
+
+                elif x > comp.index('(') and x < comp.index(')'):
+
+                    # If 2 letter, not in dictionary, and '^' doesn't follow
+                    if x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and comp[x + 2] and f'{comp[x]}{comp[x+1]}' not in sideVals[counter] and comp[x+3] != '^':
+                        sideVals[counter][f'{comp[x]}{comp[x+1]}'] = const * polyco
+
+                    # If 1 letter, not in dictionary, and '^' doesn't follow
+                    elif x < len(comp)-2 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x+2] != '^':
+                        sideVals[counter][comp[x]] = const * polyco
+
+                    # If 2 letter, in dictionary, and '^' doesn't follow
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and comp[
+                        x + 2] and f'{comp[x]}{comp[x + 1]}' not in sideVals[counter] and comp[x + 3] != '^':
+                        existing = sideVals[counter].get(f'{comp[x]}{comp[x + 1]}')
+                        sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': existing + (const * polyco)})
+
+                    # If 1 letter, in dictionary, and '^' doesn't follow
+                    elif x < len(comp) - 2 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x + 2] != '^':
+                        existing = sideVals[counter].get(comp[x])
+                        sideVals[counter].update({comp[x]: existing + (const * polyco)})
+
+                    # '^' follows
+
+                    # If 2 letter, not in dictionary, and '^' follows
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and comp[x + 2] and f'{comp[x]}{comp[x + 1]}' not in sideVals[counter] and comp[x + 3] == '^':
+                        sideVals[counter][f'{comp[x]}{comp[x + 1]}'] = const * polyco * multiple
+
+                    # If 1 letter, not in dictionary, and '^' follows
+                    elif x < len(comp) - 2 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x + 2] == '^':
+                        sideVals[counter][comp[x]] = const * polyco * multiple
+
+                    # If 2 letter, in dictionary, and '^' follows
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and comp[x + 2] and f'{comp[x]}{comp[x + 1]}' not in sideVals[counter] and comp[x + 3] == '^':
+                        existing = sideVals[counter].get(f'{comp[x]}{comp[x + 1]}')
+                        sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': existing + (const * polyco * multiple)})
+
+                    # If 1 letter, in dictionary, and '^' follows
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x] not in sideVals[counter] and comp[x + 2] == '^':
+                        existing = sideVals[counter].get(comp[x])
+                        sideVals[counter].update({comp[x]: existing + (const * polyco * multiple)})
+        else:
+            print(f"Component 1: {comp}, Constant: {const}")
+            for x in range(actStart, len(comp)):
+                if x == len(comp) - 1:
+                    if comp[x].isupper():
+                        if comp[x] in sideVals[counter]:
+                            sideVals[counter][comp[x]] += const
                         else:
-                            # Single letter element
-                            if reactParts[x][y - 1] not in reactantDict:
-                                reactantDict.update({reactParts[x][y - 1]: int(reactParts[x][y + 1]) * constants})
-                            else:
-                                existing = reactantDict.get(reactParts[x][y - 1])
-                                reactantDict.update({reactParts[x][y - 1]: existing + (int(reactParts[x][y + 1]) * constants)})
+                            sideVals[counter][comp[x]] = const
+                    continue
 
-            # Handle elements without subscripts
-            if y < len(reactParts[x]) and reactParts[x][y].isupper():
-                # Check if this is followed by a lowercase letter (two-letter element)
-                if y + 1 < len(reactParts[x]) and reactParts[x][y + 1].islower():
-                    # Check if this is already processed by ^ handling
-                    if y + 2 >= len(reactParts[x]) or reactParts[x][y + 2] != '^':
-                        if f'{reactParts[x][y]}{reactParts[x][y + 1]}' not in reactantDict:
-                            reactantDict.update({f'{reactParts[x][y]}{reactParts[x][y + 1]}': constants})
-                        else:
-                            existing = reactantDict.get(f'{reactParts[x][y]}{reactParts[x][y + 1]}')
-                            reactantDict.update({f'{reactParts[x][y]}{reactParts[x][y + 1]}': existing + constants})
-
-                        skip_next = True
-                # Single letter element not followed by ^
-                elif y + 1 >= len(reactParts[x]) or reactParts[x][y + 1] != '^':
-
-                    if reactParts[x][y] not in reactantDict:
-                        reactantDict.update({reactParts[x][y]: constants})
-
+                if x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower():
+                    i = x + 3
+                    multiple = ''
+                    while i < len(comp) and comp[i].isdigit():
+                        multiple += comp[i]
+                        i += 1
+                    if multiple == '':
+                        multiple = 1
                     else:
-                        existing = reactantDict.get(reactParts[x][y])
-                        reactantDict.update({reactParts[x][y]: existing + constants})
+                        multiple = int(multiple)
 
-
-    productDict = dict()
-
-    # Using the same improved logic for products
-    for x in range(len(prodParts)):
-        skip_next = False
-        for y in range(len(prodParts[x])):
-            if skip_next:
-                skip_next = False
-                continue
-
-            constants = 1
-            if prodParts[x][0].isdigit():
-                constants = int(prodParts[x][0])
-
-            productConsts.append(constants)
-            # If there is more than one of an atom in the compound
-            if '^' in prodParts[x] and '(' not in prodParts[x]:
-                if y > 0 and y < len(prodParts[x]):
-                    if prodParts[x][y] == '^':
-                        # Check if character before ^ is uppercase (single element) or lowercase (part of two-letter element)
-                        if prodParts[x][y - 1].islower() and y > 1:
-                            if f'{prodParts[x][y - 2]}{prodParts[x][y - 1]}' not in productDict:
-                                productDict.update({f'{prodParts[x][y - 2]}{prodParts[x][y - 1]}': int(prodParts[x][y + 1])* constants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = productDict.get(f'{prodParts[x][y - 2]}{prodParts[x][y - 1]}')
-                                productDict.update({f'{prodParts[x][y - 2]}{prodParts[x][y - 1]}': existing + (int(prodParts[x][y + 1])* constants)})
-                        else:
-                            # Single letter element
-                            if prodParts[x][y-1] not in productDict:
-                                productDict.update({prodParts[x][y - 1]: int(prodParts[x][y + 1])* constants})
-                            else:
-                                existing = productDict.get(prodParts[x][y-1])
-                                productDict.update({prodParts[x][y - 1]: existing + (int(prodParts[x][y + 1])* constants)})
-
-            # Handle elements without subscripts
-            if y < len(prodParts[x]) and prodParts[x][y].isupper() and '(' not in prodParts[x]:
-                # Check if this is followed by a lowercase letter (two-letter element)
-                if y + 1 < len(prodParts[x]) and prodParts[x][y + 1].islower():
-                    # Check if this is already processed by ^ handling
-                    if y + 2 >= len(prodParts[x]) or prodParts[x][y + 2] != '^':
-                        if f'{prodParts[x][y]}{prodParts[x][y + 1]}' not in productDict:
-                            productDict.update({f'{prodParts[x][y]}{prodParts[x][y + 1]}': constants})
-                        else:
-                            existing = productDict.get(f'{prodParts[x][y]}{prodParts[x][y + 1]}')
-                            productDict.update({f'{prodParts[x][y]}{prodParts[x][y + 1]}': existing + constants})
-
-                        skip_next = True
-                # Single letter element not followed by ^
-                elif y + 1 >= len(prodParts[x]) or prodParts[x][y + 1] != '^':
-
-                    if prodParts[x][y] not in productDict:
-                        productDict.update({prodParts[x][y]: constants})
-
+                else:
+                    i = x + 2
+                    multiple = ''
+                    while i < len(comp) and comp[i].isdigit():
+                        multiple += comp[i]
+                        i += 1
+                    if multiple == '':
+                        multiple = 1
                     else:
-                        existing = productDict.get(prodParts[x][y])
-                        productDict.update({prodParts[x][y]: existing + constants})
+                        multiple = int(multiple)
 
+                    if len(comp) == 1:
+                        sideVals[counter][comp[x]] = const
 
-    return reactantDict, productDict, reactParts, prodParts, reactantConsts, productConsts
+                    # If 2 letter, in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and f'{comp[x]}{comp[x+1]}' in sideVals[counter] and comp[x+2] != '^':
+                        existing = int(sideVals[counter].get(f'{comp[x]}{comp[x+1]}'))
+                        sideVals[counter].update({f'{comp[x]}{comp[x+1]}': existing + const})
 
-def balanceCheck(reactDic, prodDic):
-    solved = 0
-    for x in reactDic:
-        if reactDic.get(x) == prodDic.get(x):
-            solved += 1
+                    # If 2 letter, not in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+1].islower() and comp[x+2] != '^':
+                        sideVals[counter][f'{comp[x]}{comp[x + 1]}'] = const
 
-    if solved == len(reactDic):
+                    # If 1 letter, in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x] in sideVals[counter] and comp[x+1] != '^':
+                        existing = int(sideVals[counter].get(comp[x]))
+                        sideVals[counter].update({[comp[x]] : const + existing})
+
+                    # If 1 letter, not in dictionary already, and there are no ^s
+                    elif x < len(comp)-1 and comp[x].isupper() and comp[x+1] != '^':
+                        sideVals[counter][comp[x]] = const
+
+                    # Start of ^s
+
+                    # If 2 letter, in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and f'{comp[x]}{comp[x + 1]}' in sideVals[counter] and comp[x+2] == '^':
+                        existing = int(sideVals[counter].get(f'{comp[x]}{comp[x + 1]}'))
+                        sideVals[counter].update({f'{comp[x]}{comp[x + 1]}': existing + (const * multiple)})
+
+                    # If 2 letter, not in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x + 1].islower() and comp[x+2] == '^':
+                        sideVals[counter][comp[x]+comp[x + 1]] = const * multiple
+
+                    # If 1 letter, in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x] in sideVals[counter] and comp[x+1] == '^':
+                        existing = int(sideVals[counter].get(comp[x]))
+                        sideVals[counter].update({comp[x]: (const * multiple) + existing})
+
+                    # If 1 letter, not in dictionary already, and there are ^s
+                    elif x < len(comp) - 1 and comp[x].isupper() and comp[x+1] == '^':
+                        sideVals[counter][comp[x]] = const * multiple
+        counter += 1
+
+    return sideVals
+def mergeDicts(dicts):
+    print('Merging...')
+    result = dict()
+    for i in dicts:
+        for j in i:
+            if j in result:
+                result.update({j: i.get(j) + result.get(j)})
+            else:
+                result[j] = i.get(j)
+
+    return result
+
+def solveCheck(check1, check2):
+
+    print('Checking')
+    if check1 == check2:
         return True
     else:
         return False
-def solver(reactDic, prodDic, reactParts, prodParts, reactConsts, prodConsts):
-    values = dict()
-    letters = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-               'V', 'W', 'X', 'Y', 'Z'}
-    for i in prodParts:
-        values.update({letters[i]: 1})
-reactantDict, productDict, reactantParts, productParts, reactantConsts, productConsts = inputHandling(ogString)
-
-print(balanceCheck(reactantDict, productDict))
-print(inputHandling(ogString))ogString = input("Enter the Equation (Write ^x for any subscript):")
-
-
-def inputHandling(firstEquation):
-    # Split Reaction into 2 Sides
-    sides = firstEquation.split('=')
-    reactants = sides[0].split('+')
-    reactantSplit = []
-    reactantConsts = []
-
-    products = sides[1].split('+')
-    productSplit = []
-    productConsts = []
-    polyDict = dict()
-    # Parse Reactants into Lists
-    for i in range(len(reactants)):
-        # Remove spaces first, then convert to list
-        reactantSplit.append(list(reactants[i].replace(" ", "")))
-
-    reactantDict = dict()
-
-    # Parse Reactant List into Dictionary with Values
-    for x in range(len(reactantSplit)):
-        skip_next = False
-        constants = 1
-        if reactantSplit[x][0].isdigit():
-            constants = int(reactantSplit[x][0])
-
-        reactantConsts.append(constants)
-        for y in range(len(reactantSplit[x])):
-            if skip_next:
-                skip_next = False
-                continue
-
-            polyatomic = False
-            polyconstants = 1
-
-            # If there is more than one of an atom in the compound
-            if '^' in reactantSplit[x] and '(' not in reactantSplit[x]:
-                if y > 0 and y < len(reactantSplit[x]):
-                    if reactantSplit[x][y] == '^':
-                        # Check if character before ^ is uppercase (single element) or lowercase (part of two-letter element)
-                        if reactantSplit[x][y - 1].islower() and y > 1:
-                            if f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}' not in reactantDict:
-                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': int(
-                                    reactantSplit[x][y + 1])*constants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = reactantDict.get(f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}')
-                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': existing + (int(reactantSplit[x][y + 1])*constants)})
-                        else:
-                            # Single letter element
-                            if reactantSplit[x][y - 1] not in reactantDict:
-                                reactantDict.update({reactantSplit[x][y - 1]: int(reactantSplit[x][y + 1])*constants})
-                            else:
-                                existing = reactantDict.get(reactantSplit[x][y - 1])
-                                reactantDict.update({reactantSplit[x][y - 1]: existing + (int(reactantSplit[x][y + 1])*constants)})
-            elif '^' in reactantSplit[x]:
-                if y > 0 and y < len(reactantSplit[x]):
-                    if reactantSplit[x][y] == '(':
-                        polyatomic = True
-                    if reactantSplit[x][reactantSplit[x].index(')') + 1] == '^':
-                        polyconstants = reactantSplit[x][reactantSplit[x].index(')')+2]
-                    if reactantSplit[x][y] == '^' and not polyatomic:
-                        # Check if character before ^ is uppercase (single element) or lowercase (part of two-letter element)
-                        if reactantSplit[x][y - 1].islower() and y > 1:
-                            if f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}' not in reactantDict:
-                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': int(
-                                    reactantSplit[x][y + 1])*constants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = reactantDict.get(f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}')
-                                reactantDict.update({f'{reactantSplit[x][y - 2]}{reactantSplit[x][y - 1]}': existing + (int(reactantSplit[x][y + 1])*constants)})
-                        else:
-                            # Single letter element
-                            if reactantSplit[x][y - 1] not in reactantDict:
-                                reactantDict.update({reactantSplit[x][y - 1]: int(reactantSplit[x][y + 1])*constants})
-                            else:
-                                existing = reactantDict.get(reactantSplit[x][y - 1])
-                                reactantDict.update({reactantSplit[x][y - 1]: existing + (int(reactantSplit[x][y + 1])*constants)})
-
-            # Handle elements without subscripts
-            if y < len(reactantSplit[x]) and reactantSplit[x][y].isupper() and '(' not in reactantSplit[x]:
-                # Check if this is followed by a lowercase letter (two-letter element)
-                if y + 1 < len(reactantSplit[x]) and reactantSplit[x][y + 1].islower():
-                    # Check if this is already processed by ^ handling
-                    if y + 2 >= len(reactantSplit[x]) or reactantSplit[x][y + 2] != '^':
-                        if f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}' not in reactantDict:
-                            reactantDict.update({f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}': constants})
-                        else:
-                            existing = reactantDict.get(f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}')
-                            reactantDict.update({f'{reactantSplit[x][y]}{reactantSplit[x][y + 1]}': existing + constants})
-
-                        skip_next = True
-                # Single letter element not followed by ^
-                elif y + 1 >= len(reactantSplit[x]) or reactantSplit[x][y + 1] != '^':
-
-                    if reactantSplit[x][y] not in reactantDict:
-                        reactantDict.update({reactantSplit[x][y]: constants})
-
-                    else:
-                        existing = reactantDict.get(reactantSplit[x][y])
-                        reactantDict.update({reactantSplit[x][y]: existing + constants})
-
-    for i in range(len(products)):
-        # Remove spaces first, then convert to list
-        productSplit.append(list(products[i].replace(" ", "")))
-
-    productDict = dict()
-
-    # Using the same improved logic for products
-    for x in range(len(productSplit)):
-        skip_next = False
-        constants = 1
-        if productSplit[x][0].isdigit():
-            constants = int(productSplit[x][0])
-
-        productConsts.append(constants)
-        for y in range(len(productSplit[x])):
-            if skip_next:
-                skip_next = False
-                continue
-
-            # If there is more than one of an atom in the compound
-            if '^' in productSplit[x]:
-                if y > 0 and y < len(productSplit[x]):
-                    if productSplit[x][y] == '^':
-                        # Check if character before ^ is uppercase (single element) or lowercase (part of two-letter element)
-                        if productSplit[x][y - 1].islower() and y > 1:
-                            if f'{productSplit[x][y - 2]}{productSplit[x][y - 1]}' not in productDict:
-                                productDict.update({f'{productSplit[x][y - 2]}{productSplit[x][y - 1]}': int(productSplit[x][y + 1])*constants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = productDict.get(f'{productSplit[x][y - 2]}{productSplit[x][y - 1]}')
-                                productDict.update({f'{productSplit[x][y - 2]}{productSplit[x][y - 1]}': existing + (int(productSplit[x][y + 1])*constants)})
-                        else:
-                            # Single letter element
-                            if productSplit[x][y-1] not in productDict:
-                                productDict.update({productSplit[x][y - 1]: int(productSplit[x][y + 1])*constants})
-                            else:
-                                existing = productDict.get(productSplit[x][y-1])
-                                productDict.update({productSplit[x][y - 1]: existing + (int(productSplit[x][y + 1])*constants)})
-
-            # Handle elements without subscripts
-            if y < len(productSplit[x]) and productSplit[x][y].isupper():
-                # Check if this is followed by a lowercase letter (two-letter element)
-                if y + 1 < len(productSplit[x]) and productSplit[x][y + 1].islower():
-                    # Check if this is already processed by ^ handling
-                    if y + 2 >= len(productSplit[x]) or productSplit[x][y + 2] != '^':
-                        if f'{productSplit[x][y]}{productSplit[x][y + 1]}' not in productDict:
-                            productDict.update({f'{productSplit[x][y]}{productSplit[x][y + 1]}': constants})
-                        else:
-                            existing = productDict.get(f'{productSplit[x][y]}{productSplit[x][y + 1]}')
-                            productDict.update({f'{productSplit[x][y]}{productSplit[x][y + 1]}': existing + constants})
-
-                        skip_next = True
-                # Single letter element not followed by ^
-                elif y + 1 >= len(productSplit[x]) or productSplit[x][y + 1] != '^':
-
-                    if productSplit[x][y] not in productDict:
-                        productDict.update({productSplit[x][y]: constants})
-
-                    else:
-                        existing = productDict.get(productSplit[x][y])
-                        productDict.update({productSplit[x][y]: existing + constants})
+def createEquation(reacts, prods):
+    reactElements = mergeDicts(reacts)
+    prodElements = mergeDicts(prods)
+    elementList = reacts + prods
+    elements = mergeDicts(list(reactElements) + list(prodElements))
+    totals = list(mergeDicts(prods)) + list(mergeDicts(prods))
+    vectList = [[] for i in range(len(elementList))]
+    for i in elementList:
+        for j in range(0, len(elements)):
+            if elements[j] in i:
+                vectList[j].append(int(i.get(elementList[j])))
+            else:
+                vectList[j].append(0)
+    return vectList
 
 
-    return reactantDict, productDict, reactantSplit, productSplit, reactantConsts, productConsts
+def createEquation(reacts, prods):
+    # Combine reactant and product dictionaries into one list; order is preserved.
+    compoundList = reacts + prods
 
-def reCheck(reactDic, prodDic, prodParts, reactParts):
-    reactantConsts = []
-    productConsts = []
+    # Get the union (merged dictionary) of all compound dictionaries.
+    # Then extract the keys (unique element symbols) in a list.
+    uniqueElements = list(mergeDicts(compoundList).keys())
 
-    for x in range(len(reactParts)):
-        skip_next = False
-        for y in range(len(reactParts[x])):
-            if skip_next:
-                skip_next = False
-                continue
+    # Initialize a matrix with one row per unique element.
+    # Each row will eventually have one entry per compound in compoundList.
+    equations = [[] for _ in range(len(compoundList))]
 
-            # If there is more than one of an atom in the compound
-            constants = 1
-            if reactParts[x][0].isdigit():
-                constants = int(reactParts[x][0])
+    # Loop over each compound in our list...
+    for j, compound in enumerate(compoundList):
+        # For each unique element, insert the count (or 0 if missing)
+        for i, elem in enumerate(uniqueElements):
+            equations[j].append(int(compound.get(elem, 0)))
 
-            reactantConsts.append(constants)
+    return equations, compoundList
 
-            if '^' in reactParts[x]:
-                if y > 0 and y < len(reactParts[x]):
-                    if reactParts[x][y] == '^':
-                        # Check if character before ^ is uppercase (single element) or lowercase (part of two-letter element)
-                        if reactParts[x][y - 1].islower() and y > 1:
-                            if f'{reactParts[x][y - 2]}{reactParts[x][y - 1]}' not in reactantDict:
-                                reactantDict.update({f'{reactParts[x][y - 2]}{reactParts[x][y - 1]}': int(
-                                    reactParts[x][y + 1]) * constants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = reactantDict.get(f'{reactParts[x][y - 2]}{reactParts[x][y - 1]}')
-                                reactantDict.update({f'{reactParts[x][y - 2]}{reactParts[x][y - 1]}': existing + (constants * int(reactParts[x][y + 1]))})
-                        else:
-                            # Single letter element
-                            if reactParts[x][y - 1] not in reactantDict:
-                                reactantDict.update({reactParts[x][y - 1]: int(reactParts[x][y + 1]) * constants})
-                            else:
-                                existing = reactantDict.get(reactParts[x][y - 1])
-                                reactantDict.update({reactParts[x][y - 1]: existing + (int(reactParts[x][y + 1]) * constants)})
+def solver(eqs):
+    matrix = Matrix(eqs).transpose()
 
-            # Handle elements without subscripts
-            if y < len(reactParts[x]) and reactParts[x][y].isupper():
-                # Check if this is followed by a lowercase letter (two-letter element)
-                if y + 1 < len(reactParts[x]) and reactParts[x][y + 1].islower():
-                    # Check if this is already processed by ^ handling
-                    if y + 2 >= len(reactParts[x]) or reactParts[x][y + 2] != '^':
-                        if f'{reactParts[x][y]}{reactParts[x][y + 1]}' not in reactantDict:
-                            reactantDict.update({f'{reactParts[x][y]}{reactParts[x][y + 1]}': constants})
-                        else:
-                            existing = reactantDict.get(f'{reactParts[x][y]}{reactParts[x][y + 1]}')
-                            reactantDict.update({f'{reactParts[x][y]}{reactParts[x][y + 1]}': existing + constants})
+    nullSpace = matrix.nullspace()
 
-                        skip_next = True
-                # Single letter element not followed by ^
-                elif y + 1 >= len(reactParts[x]) or reactParts[x][y + 1] != '^':
+    solution = nullSpace[0]
 
-                    if reactParts[x][y] not in reactantDict:
-                        reactantDict.update({reactParts[x][y]: constants})
+    lcmList = lcm([i.q for i in solution])
 
-                    else:
-                        existing = reactantDict.get(reactParts[x][y])
-                        reactantDict.update({reactParts[x][y]: existing + constants})
+    solution = [int(i * lcmList) for i in solution]
 
+    return solution
 
-    productDict = dict()
-
-    # Using the same improved logic for products
-    for x in range(len(prodParts)):
-        skip_next = False
-        for y in range(len(prodParts[x])):
-            if skip_next:
-                skip_next = False
-                continue
-
-            constants = 1
-            if prodParts[x][0].isdigit():
-                constants = int(prodParts[x][0])
-
-            productConsts.append(constants)
-            # If there is more than one of an atom in the compound
-            if '^' in prodParts[x] and '(' not in prodParts[x]:
-                if y > 0 and y < len(prodParts[x]):
-                    if prodParts[x][y] == '^':
-                        # Check if character before ^ is uppercase (single element) or lowercase (part of two-letter element)
-                        if prodParts[x][y - 1].islower() and y > 1:
-                            if f'{prodParts[x][y - 2]}{prodParts[x][y - 1]}' not in productDict:
-                                productDict.update({f'{prodParts[x][y - 2]}{prodParts[x][y - 1]}': int(prodParts[x][y + 1])* constants})
-                            # Two-letter element (like 'Cl' in 'ZnCl^2')
-                            else:
-                                existing = productDict.get(f'{prodParts[x][y - 2]}{prodParts[x][y - 1]}')
-                                productDict.update({f'{prodParts[x][y - 2]}{prodParts[x][y - 1]}': existing + (int(prodParts[x][y + 1])* constants)})
-                        else:
-                            # Single letter element
-                            if prodParts[x][y-1] not in productDict:
-                                productDict.update({prodParts[x][y - 1]: int(prodParts[x][y + 1])* constants})
-                            else:
-                                existing = productDict.get(prodParts[x][y-1])
-                                productDict.update({prodParts[x][y - 1]: existing + (int(prodParts[x][y + 1])* constants)})
-
-            # Handle elements without subscripts
-            if y < len(prodParts[x]) and prodParts[x][y].isupper() and '(' not in prodParts[x]:
-                # Check if this is followed by a lowercase letter (two-letter element)
-                if y + 1 < len(prodParts[x]) and prodParts[x][y + 1].islower():
-                    # Check if this is already processed by ^ handling
-                    if y + 2 >= len(prodParts[x]) or prodParts[x][y + 2] != '^':
-                        if f'{prodParts[x][y]}{prodParts[x][y + 1]}' not in productDict:
-                            productDict.update({f'{prodParts[x][y]}{prodParts[x][y + 1]}': constants})
-                        else:
-                            existing = productDict.get(f'{prodParts[x][y]}{prodParts[x][y + 1]}')
-                            productDict.update({f'{prodParts[x][y]}{prodParts[x][y + 1]}': existing + constants})
-
-                        skip_next = True
-                # Single letter element not followed by ^
-                elif y + 1 >= len(prodParts[x]) or prodParts[x][y + 1] != '^':
-
-                    if prodParts[x][y] not in productDict:
-                        productDict.update({prodParts[x][y]: constants})
-
-                    else:
-                        existing = productDict.get(prodParts[x][y])
-                        productDict.update({prodParts[x][y]: existing + constants})
-
-
-    return reactantDict, productDict, reactParts, prodParts, reactantConsts, productConsts
-
-def balanceCheck(reactDic, prodDic):
-    solved = 0
-    for x in reactDic:
-        if reactDic.get(x) == prodDic.get(x):
-            solved += 1
-
-    if solved == len(reactDic):
-        return True
-    else:
-        return False
-def solver(reactDic, prodDic, reactParts, prodParts, reactConsts, prodConsts):
-    values = dict()
-    letters = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-               'V', 'W', 'X', 'Y', 'Z'}
-    for i in prodParts:
-        values.update({letters[i]: 1})
-reactantDict, productDict, reactantParts, productParts, reactantConsts, productConsts = inputHandling(ogString)
-
-print(balanceCheck(reactantDict, productDict))
-print(inputHandling(ogString))
+# Example usage:
+matrix, compoundList = createEquation(oneSide(reactants), oneSide(products))
+print("Compound List:", compoundList)
+print(f'split value:{len(oneSide(reactants))-1}')
+print(matrix[len(oneSide(reactants))-1])
+i = len(oneSide(reactants))
+while i < len(matrix):
+    for j in range(len(matrix[i])):
+        matrix[i][j] *= -1
+    print(f'products: {matrix[i]}')
+    i+=1
+print(solver(matrix))
