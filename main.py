@@ -1,209 +1,190 @@
+import tkinter as tk
+from tkinter import ttk
 from sympy import Matrix, lcm
+from itertools import product
 
-ogString = input("Enter the Equation (Write ^x for any subscript):")
+# ========== Core Logic ==========
 
-# H(CO)^2 = H + C^2 + O^2
-sides = ogString.split('=')
-reactants = sides[0].split('+')
-products = sides[1].split('+')
+def parse_equation(ogString):
+    sides = ogString.split('=')
+    reactants = sides[0].split('+')
+    products = sides[1].split('+')
 
+    def oneSide(side):
+        sideSplit = []
+        sideVals = []
 
-def oneSide(side):
-    sideSplit = []
-    sideVals = []
+        for i in range(len(side)):
+            sideSplit.append(list(side[i].replace(" ", "")))
+            sideVals.append(dict())
 
-    for i in range(len(side)):
-        # Remove spaces first, then convert to list
-        sideSplit.append(list(side[i].replace(" ", "")))
-        sideVals.append(dict())
+        for counter, comp in enumerate(sideSplit):
+            i = 0
+            const = 1
+            stack = []
+            temp_dict = {}
 
-    for counter, comp in enumerate(sideSplit):
-        i = 0
-        const = 1  # Default constant if none provided
-        stack = []  # Stack to handle brackets
-        temp_dict = {}  # Temporary dictionary for parsed elements
-
-        while i < len(comp):
-            if comp[i] == '(':
-                polyco = True
-                # Push current temp_dict and const to stack
-                stack.append((temp_dict, const))
-                temp_dict = {}
-                const = 1
-                i += 1
-            elif comp[i] == ')':
-                # Process the closing bracket
-                i += 1
-                multiplier = ''
-                while i < len(comp) and comp[i].isdigit():
-                    multiplier += comp[i]
+            while i < len(comp):
+                if comp[i] == '(':
+                    stack.append(temp_dict)
+                    temp_dict = {}
                     i += 1
-                multiplier = int(multiplier) if multiplier else 1
-                # Multiply elements inside brackets by the multiplier
-                for key in temp_dict:
-                    temp_dict[key] *= multiplier
-                # Pop the previous dictionary and merge
-                prev_dict, prev_const = stack.pop()
-                for key, value in temp_dict.items():
-                    if key in prev_dict:
-                        prev_dict[key] += value
+                elif comp[i] == ')':
+                    i += 1
+                    polydig = ''
+                    if i < len(comp) and comp[i] == '^':
+                        i += 1
+                        while i < len(comp) and comp[i].isdigit():
+                            polydig += comp[i]
+                            i += 1
+                    polydig = int(polydig) if polydig else 1
+                    for key in temp_dict:
+                        temp_dict[key] *= polydig
+                    formDict = stack.pop()
+                    for key in temp_dict:
+                        if key in formDict:
+                            formDict[key] += temp_dict[key]
+                        else:
+                            formDict[key] = temp_dict[key]
+                    temp_dict = formDict
+                elif comp[i].isdigit():
+                    const = ''
+                    while i < len(comp) and comp[i].isdigit():
+                        const += comp[i]
+                        i += 1
+                    const = int(const) if const else 1
+                elif comp[i].isupper():
+                    element = comp[i]
+                    if i + 1 < len(comp) and comp[i + 1].islower():
+                        i += 1
+                        element += comp[i]
+                    i += 1
+                    subscript = ''
+                    if i < len(comp) and comp[i] == '^':
+                        i += 1
+                        while i < len(comp) and comp[i].isdigit():
+                            subscript += comp[i]
+                            i += 1
+                    subscript = int(subscript) if subscript else 1
+                    if element in temp_dict:
+                        temp_dict[element] += const * subscript
                     else:
-                        prev_dict[key] = value
-                temp_dict = prev_dict
-                const = prev_const
-            elif comp[i].isdigit():
-                # Handle leading coefficients (e.g., "2Mg^4")
-                const = ''
-                while i < len(comp) and comp[i].isdigit():
-                    const += comp[i]
-                    i += 1
-                const = int(const)
-            elif comp[i].isupper() and not polyco:
-                # Parse elements
-                element = comp[i]
-                if i + 1 < len(comp) and comp[i + 1].islower():
-                    element += comp[i + 1]
-                    i += 1
-                i += 1
-                # Parse subscripts
-                subscript = ''
-                if i < len(comp) and comp[i] == '^':
-                    i += 1
-                    while i < len(comp) and comp[i].isdigit():
-                        subscript += comp[i]
-                        i += 1
-                    subscript = int(subscript)
+                        temp_dict[element] = const * subscript
                 else:
-                    subscript = 1
-                # Update the temporary dictionary
-                if element in temp_dict:
-                    temp_dict[element] += const * subscript
-                else:
-                    temp_dict[element] = const * subscript
-                    
-            elif comp[i].isupper() and polyco:
-                # Parse elements
-                element = comp[i]
-                if i + 1 < len(comp) and comp[i + 1].islower():
-                    element += comp[i + 1]
                     i += 1
-                i += 1
-                # Parse subscripts
-                subscript = ''
-                if i < len(comp) and comp[i] == '^':
-                    i += 1
-                    while i < len(comp) and comp[i].isdigit():
-                        subscript += comp[i]
-                        i += 1
-                    subscript = int(subscript)
-                else:
-                    subscript = 1
-                # Update the temporary dictionary
-                if element in temp_dict:
-                    temp_dict[element] += const * subscript
-                else:
-                    temp_dict[element] = const * subscript
-            else:
-                # Move to the next character
-                i += 1
+            sideVals[counter] = temp_dict
+        print(sideVals)
+        return sideVals
 
-        # Merge the parsed dictionary into sideVals
-        sideVals[counter] = temp_dict
+    def mergeDicts(dicts):
+        result = dict()
+        for i in dicts:
+            for j in i:
+                result[j] = result.get(j, 0) + i[j]
+        return result
 
-    return sideVals
-
-
-def mergeDicts(dicts):
-    # print('Merging...')
-    result = dict()
-    for i in dicts:
-        for j in i:
-            if j in result:
-                result.update({j: i.get(j) + result.get(j)})
-            else:
-                result[j] = i.get(j)
-
-    return result
-
-
-def solveCheck(check1, check2):
-    print('Checking')
-    if check1 == check2:
-        return True
-    else:
-        return False
-
-
-def createEquation(reacts, prods):
-    reactElements = mergeDicts(reacts)
-    prodElements = mergeDicts(prods)
-    elementList = reacts + prods
-    elements = mergeDicts(list(reactElements) + list(prodElements))
-    totals = list(mergeDicts(prods)) + list(mergeDicts(prods))
-    vectList = [[] for i in range(len(elementList))]
-    for i in elementList:
-        for j in range(0, len(elements)):
-            if elements[j] in i:
-                vectList[j].append(int(i.get(elementList[j])))
-            else:
-                vectList[j].append(0)
-    print(f'Vectors: {vectList}')
-    return vectList
-
-
-def createEquation(reacts, prods):
-    # Combine reactant and product dictionaries into one list; order is preserved.
-    compoundList = reacts + prods
-    print(f'Combined: {compoundList}')
-    # Get the union (merged dictionary) of all compound dictionaries.
-    # Then extract the keys (unique element symbols) in a list.
-    uniqueElements = list(mergeDicts(compoundList).keys())
-
-    # Initialize a matrix with one row per unique element.
-    # Each row will eventually have one entry per compound in compoundList.
-    equations = [[] for _ in range(len(compoundList))]
-
-    # Loop over each compound in our list...
-    for j, compound in enumerate(compoundList):
-        # For each unique element, insert the count (or 0 if missing)
+    def createEquation(reacts, prods):
+        compoundList = reacts + prods
+        uniqueElements = list(mergeDicts(compoundList).keys())
+        equations = [[] for _ in range(len(uniqueElements))]
         for i, elem in enumerate(uniqueElements):
-            equations[j].append(int(compound.get(elem, 0)))
+            for j in range(len(compoundList)):
+                coeff = compoundList[j].get(elem, 0)
+                if j >= len(reacts):  # If it's a product, negate it
+                    coeff *= -1
+                equations[i].append(coeff)
+        print(equations)
+        return equations, uniqueElements, compoundList
 
-    return equations, compoundList
+    def solver(eqs):
+        matrix = Matrix(eqs)
+        nullSpace = matrix.nullspace()
+        if not nullSpace:
+            return False
+
+        max_coeff = 10  # You can increase this if needed
+        for coeffs in product(range(1, max_coeff + 1), repeat=len(nullSpace)):
+            # Initialize candidate with the first scaled null space vector
+            candidate = coeffs[0] * nullSpace[0]
+
+            # Add the remaining scaled null space vectors
+            for i in range(1, len(coeffs)):
+                candidate += coeffs[i] * nullSpace[i]
+
+            # Now candidate is a sympy matrix. Extract the elements as a list
+            candidate_list = candidate.tolist()  # Convert the matrix to a list of lists
+            # If the null space vectors are column vectors, candidate will be a list of lists like [[val1], [val2], ...]
+            # We want a single list of values.
+            candidate_values = [item for sublist in candidate_list for item in sublist]
+
+            l = lcm([i.q for i in candidate_values])
+            candidate_ints = [int(v * l) for v in candidate_values]
+
+            if all(x > 0 for x in candidate_ints):
+                return candidate_ints
+
+        return None
+
+    reacts = oneSide(reactants)
+    prods = oneSide(products)
+    matrix, elements, compoundList = createEquation(reacts, prods)
+
+    coeffs = solver(matrix)
+
+    if not coeffs:
+        return "Could not balance the equation.", "", "", ""
+
+    balanced_eq = ""
+    for i in range(len(coeffs)):
+        compound = reactants[i] if i < len(reacts) else products[i - len(reacts)]
+        balanced_eq += f"{coeffs[i]}{compound}"
+        if i == len(reacts) - 1:
+            balanced_eq += " = "
+        elif i < len(coeffs) - 1:
+            balanced_eq += " + "
+
+    matrix_str = "\n".join(str(row) for row in matrix)
+    react_str = "\n".join(f"{k}: {v}" for k, v in mergeDicts(reacts).items())
+    prod_str = "\n".join(f"{k}: {v}" for k, v in mergeDicts(prods).items())
+    element_info = f"Reactants:\n{react_str}\n\nProducts:\n{prod_str}"
+
+    return ogString, matrix_str, balanced_eq, element_info
 
 
-def solver(eqs):
-    matrix = Matrix(eqs).transpose()
+# ========== GUI Code ==========
 
-    nullSpace = matrix.nullspace()
+def on_submit():
+    input_eq = equation_entry.get()
+    parsed, matrix, result, elements = parse_equation(input_eq)
+    parsed_label.config(text=parsed)
+    matrix_label.config(text=matrix)
+    result_label.config(text=result)
+    element_label.config(text=elements)
 
-    if not nullSpace:
-        return False
-    solution = nullSpace[0]
-    i = 1
-    while 0 in solution and i < len(nullSpace):
-        solution = nullSpace[i]
-        i += 1
+root = tk.Tk()
+root.title("Chemical Equation Balancer")
+root.geometry("800x600")
 
-    lcmList = lcm([i.q for i in solution])
+main_frame = ttk.Frame(root, padding=10)
+main_frame.pack(fill='both', expand=True)
 
-    solution = [int(i * lcmList) for i in solution]
+equation_entry = ttk.Entry(main_frame, width=80)
+equation_entry.insert(0, "Mg(CO^2) = Mg + C + O^2")
+equation_entry.pack(pady=10)
 
-    return solution
+submit_button = ttk.Button(main_frame, text="Balance", command=on_submit)
+submit_button.pack(pady=5)
 
+parsed_label = ttk.Label(main_frame, text="Parsed Equation Appears Here", wraplength=700, justify="left")
+parsed_label.pack(pady=5)
 
-# Example usage:
-matrix, compoundList = createEquation(oneSide(reactants), oneSide(products))
-# print("Compound List:", compoundList)
-# print(f'split value:{len(oneSide(reactants))-1}')
-# print(matrix[len(oneSide(reactants))-1])
-i = len(oneSide(reactants))
-print(f'I Value: {i}')
-while i < len(matrix):
-    print(f'Matrix: {matrix[i]}')
-    for j in range(len(matrix[i])):
-        matrix[i][j] *= -1
-    print(f'products: {matrix[i]}')
-    i += 1
-print(f'Final Matrix: {matrix}')
-print(solver(matrix))
+matrix_label = ttk.Label(main_frame, text="Matrix Output", wraplength=700, justify="left")
+matrix_label.pack(pady=5)
+
+result_label = ttk.Label(main_frame, text="Balanced Equation", background="#ccc", wraplength=700, justify="left")
+result_label.pack(pady=10, fill='x')
+
+element_label = ttk.Label(main_frame, text="Element Counts", wraplength=700, justify="left")
+element_label.pack(pady=5)
+
+root.mainloop()
