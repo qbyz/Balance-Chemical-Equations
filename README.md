@@ -10,4 +10,4 @@ A python script that balances chemical equations
 
 
 # Credits:
-qybz, partial credit to [LastChemist](https://github.com/LastChemist) for the idea and idea to use linear systems (See his project [here](https://github.com/LastChemist/CREB-Chemical_Reaction_Equation_Balancer/)).
+[qybz](https://github.com/qbyz), partial credit to [LastChemist](https://github.com/LastChemist) for the idea and idea to use linear systems (See his project [here](https://github.com/LastChemist/CREB-Chemical_Reaction_Equation_Balancer/)).
