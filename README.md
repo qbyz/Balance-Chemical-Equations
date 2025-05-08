@@ -2,10 +2,10 @@
 A python script that balances chemical equations
 
 # UI
-Initial State:
+## Initial State:
 ![When Opened](https://github.com/user-attachments/assets/6f0745a1-5fcc-445c-b4c8-4f49f9fe4bda)
 
-Solved State:
+## Solved State:
 ![When Solved](https://github.com/user-attachments/assets/ae10eb77-8430-4ca4-8fcb-db077eba4bdb)
 
 
