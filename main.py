@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import font
 from sympy import Matrix, lcm
 from itertools import product
 
@@ -153,38 +154,69 @@ def parse_equation(ogString):
 
 # ========== GUI Code ==========
 
-def on_submit():
+def on_submit(Event=None):
     input_eq = equation_entry.get()
     parsed, matrix, result, elements = parse_equation(input_eq)
-    parsed_label.config(text=parsed)
     matrix_label.config(text=matrix)
     result_label.config(text=result)
     element_label.config(text=elements)
 
 root = tk.Tk()
 root.title("Chemical Equation Balancer")
-root.geometry("800x600")
+root.geometry("900x700")
+
+largeFont = font.Font(family='Helvetica', size=14)
+medFont = font.Font(family='Helvetica', size=7)
+
+style = ttk.Style()
+
+style.configure(
+    'RoundedEntry.TEntry',
+    borderwidth=2,
+    relief='groove',
+    font=largeFont,
+    padding=[0, 5]
+)
+
+style.configure(
+    'RoundedLabel.TLabel',
+    borderwidth=2,
+    relief='solid',
+    font=medFont,
+    padding=[200, 100]
+)
+
+style.configure(
+    'RoundedResultLabel.TLabel',
+    borderwidth=2,
+    relief='solid',
+    font=largeFont,
+    padding=[10, 300]
+)
 
 main_frame = ttk.Frame(root, padding=10)
 main_frame.pack(fill='both', expand=True)
 
-equation_entry = ttk.Entry(main_frame, width=80)
+main_frame.rowconfigure(0, weight=1)
+main_frame.rowconfigure(1, weight=2)
+main_frame.rowconfigure(2, weight=2)
+
+main_frame.columnconfigure(0, weight=12)
+main_frame.columnconfigure(1, weight=1)
+main_frame.columnconfigure(2, weight=6)
+
+equation_entry = ttk.Entry(main_frame, width=80, style='RoundedEntry.TEntry')
 equation_entry.insert(0, "Mg(CO^2) = Mg + C + O^2")
-equation_entry.pack(pady=10)
+equation_entry.grid(column=0, row=0, pady=10, stick=tk.EW)
+equation_entry.bind("<Return>", on_submit)
 
-submit_button = ttk.Button(main_frame, text="Balance", command=on_submit)
-submit_button.pack(pady=5)
+matrix_label = ttk.Label(main_frame, text="Matrix Output", wraplength=700, justify="left", style='RoundedLabel.TLabel')
+matrix_label.grid(column=0, row=1, pady=5)
 
-parsed_label = ttk.Label(main_frame, text="Parsed Equation Appears Here", wraplength=700, justify="left")
-parsed_label.pack(pady=5)
+result_label = ttk.Label(main_frame, text="Balanced Equation", background="#ccc", wraplength=700, justify="center", style='RoundedResultLabel.TLabel')
+result_label.grid(column=2, row=0, rowspan=3, pady=5, sticky=tk.EW)
 
-matrix_label = ttk.Label(main_frame, text="Matrix Output", wraplength=700, justify="left")
-matrix_label.pack(pady=5)
-
-result_label = ttk.Label(main_frame, text="Balanced Equation", background="#ccc", wraplength=700, justify="left")
-result_label.pack(pady=10, fill='x')
-
-element_label = ttk.Label(main_frame, text="Element Counts", wraplength=700, justify="left")
-element_label.pack(pady=5)
+element_label = ttk.Label(main_frame, text="Element Counts", wraplength=700, justify="left", style='RoundedLabel.TLabel')
+element_label.grid(column=0, row=2, pady=5)
 
 root.mainloop()
