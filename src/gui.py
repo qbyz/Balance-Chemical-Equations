@@ -1,7 +1,4 @@
-from PyQt6.QtWidgets import (
-    QApplication, QWidget, QLineEdit, QLabel,
-    QGridLayout, QVBoxLayout, QFrame
-)
+from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QLabel, QGridLayout, QVBoxLayout, QFrame
 from PyQt6.QtCore import Qt
 import sys
 from main import parse_equation
@@ -18,7 +15,7 @@ window.setLayout(layout)
 def make_box(widget):
     frame = QFrame()
     frame.setFrameShape(QFrame.Shape.StyledPanel)
-    frame.setStyleSheet("border: 2px solid #aaa; border-radius: 6px; padding: 4px;")
+    frame.setStyleSheet("border: 2px solid #aaa; border-radius: 24px; padding: 4px;")
     inner = QVBoxLayout()
     inner.setContentsMargins(5, 5, 5, 5)
     inner.addWidget(widget)
@@ -42,9 +39,9 @@ result_label = QLabel("Result")
 result_label.setWordWrap(True)
 result_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-matrix_label.setStyleSheet("border: none; background: transparent;")
-element_label.setStyleSheet("border: none; background: transparent;")
-result_label.setStyleSheet("border: none; background: transparent;")
+matrix_label.setStyleSheet("border: none; background: transparent; font-size: 14px;")
+element_label.setStyleSheet("border: none; background: transparent; font-size: 14px;")
+result_label.setStyleSheet("border: none; background: transparent; font-size: 24px;")
 
 layout.addWidget(make_box(input_field), 0, 0, 1, 2)
 layout.addWidget(make_box(matrix_label), 1, 0)
@@ -54,9 +51,9 @@ layout.addWidget(make_box(result_label), 2, 0, 1, 2)
 def on_submit():
     eq = input_field.text()
     _, matrix, balanced, elements = parse_equation(eq)
-    matrix_label.setText(matrix)
-    result_label.setText(balanced)
-    element_label.setText(elements)
+    matrix_label.setText(matrix if matrix else "Check Your Equation")
+    result_label.setText(balanced if balanced else "Can't Balance (Check Your Equation)")
+    element_label.setText(elements if elements else "Check Your Equation")
 
 input_field.returnPressed.connect(on_submit)
 
