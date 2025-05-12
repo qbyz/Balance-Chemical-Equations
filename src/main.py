@@ -100,7 +100,7 @@ def parse_equation(ogString):
         if not nullSpace:
             return False
 
-        max_coeff = 10  # You can increase this if needed
+        max_coeff = 10  #Increase if Needed (Uses brute forcing so scales esponentially)
         for coeffs in product(range(1, max_coeff + 1), repeat=len(nullSpace)):
             # Initialize candidate with the first scaled null space vector
             candidate = coeffs[0] * nullSpace[0]
