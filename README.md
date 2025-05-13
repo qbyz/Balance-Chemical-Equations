@@ -1,6 +1,10 @@
 # Balance-Chemical-Equations
 A python script that balances chemical equations
 
+# Method:
+![Diagram of the Code](https://github.com/user-attachments/assets/38481b6e-4204-4297-a36b-9a83e07bec83)
+
+
 # UI
 ## Initial State:
 ![When Opened](https://github.com/user-attachments/assets/6f0745a1-5fcc-445c-b4c8-4f49f9fe4bda)
