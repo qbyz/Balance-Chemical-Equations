@@ -2,8 +2,7 @@
 A python script that balances chemical equations
 
 # Method:
-![Diagram of the Code](https://github.com/user-attachments/assets/38481b6e-4204-4297-a36b-9a83e07bec83)
-
+![Diagram of the Code](https://github.com/user-attachments/assets/9e17f190-8c17-413e-bfcc-4ae22f81473e)
 
 # UI
 ## Initial State:
