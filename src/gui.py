@@ -1,5 +1,5 @@
 import time
-from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QLabel, QGridLayout, QVBoxLayout, QFrame, QPushButton
+from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QLabel, QGridLayout, QVBoxLayout, QFrame, QPushButton, QSlider
 from PyQt6.QtCore import Qt
 import sys
 from main import parse_equation
@@ -13,10 +13,12 @@ window.setMinimumSize(900, 700)
 layout = QGridLayout()
 window.setLayout(layout)
 
-def make_box(widget):
+def make_box(widget, maxwidth=None):
     frame = QFrame()
     frame.setFrameShape(QFrame.Shape.StyledPanel)
     frame.setStyleSheet("border: 2px solid #aaa; border-radius: 24px; padding: 4px;")
+    if maxwidth:
+        frame.setMaximumWidth(maxwidth)
     inner = QVBoxLayout()
     inner.setContentsMargins(5, 5, 5, 5)
     inner.addWidget(widget)
@@ -60,8 +62,28 @@ def race():
     userAnswer = QLineEdit()
     userAnswer.setPlaceholderText("Enter Your Answer (Just Digits e.g., '1,1,1,1')")
 
+    headStart_label = QLabel()
+    headStart_slider = QSlider(Qt.Orientation.Horizontal)
+
+    headStart_label.setStyleSheet("border:none;")
+    headStart_slider.setStyleSheet("border:none;")
+    headStart_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    headStart_slider.setRange(0, 10)
+    headStart_slider.setValue(0)
+    headStart_label.setText('Delay: 0')
+    headStart_slider.setMaximumWidth(300)
+
+    sliderLayout = QVBoxLayout()
+    sliderLayout.addWidget(headStart_label)
+    sliderLayout.addWidget(headStart_slider, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    sliderWidget = QWidget()
+    sliderWidget.setStyleSheet("border:none;")
+    sliderWidget.setLayout(sliderLayout)
+
+    layout.addWidget(make_box(sliderWidget, maxwidth=300), 0, 3)
     layout.addWidget(make_box(userAnswer), 2, 2, 1, 2)
-    layout.addWidget(make_box(input_field), 0, 0, 1, 4)
+    layout.addWidget(make_box(input_field), 0, 0, 1, 3)
     layout.addWidget(make_box(matrix_label), 1, 0, 1, 2)
     layout.addWidget(make_box(element_label), 1, 2, 1, 2)
     layout.addWidget(make_box(result_label), 2, 0, 1, 2)
@@ -74,13 +96,22 @@ def race():
     balanced = ''
     elements = ''
     matrix = []
+    delay = 0
+
+    def updateSliderLabel(value):
+        nonlocal delay
+        delay = value
+        headStart_label.setText(f'Delay: {value}')
+
+    headStart_slider.valueChanged.connect(updateSliderLabel)
+
     def on_eq_submit():
         nonlocal runTime, coeffs, balanced, elements, eq, matrix
         eq = input_field.text()
         _, matrix, balanced, elements, runTime, coeffs = parse_equation(eq, True)
         print(coeffs)
         nonlocal startTime
-        startTime = time.time()
+        startTime = time.time()+delay
 
     def on_answer_submit():
         answer = userAnswer.text()
@@ -92,7 +123,7 @@ def race():
             nonlocal endTime
             endTime = time.time()
             userSolveTime = endTime-startTime
-            result_label.setText(f"Correct!                                                     Time: {userSolveTime} Seconds! Computer Time: {runTime} Seconds")
+            result_label.setText(f"Correct\nTime: {userSolveTime} Seconds!\nComputer Time: {runTime} Seconds")
             matrix_label.setText(matrix if matrix else "Check Your Equation")
             element_label.setText(elements if elements else "Check Your Equation")
         else:
