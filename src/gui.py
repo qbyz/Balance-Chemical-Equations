@@ -1,5 +1,4 @@
 import time
-
 from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QLabel, QGridLayout, QVBoxLayout, QFrame, QPushButton
 from PyQt6.QtCore import Qt
 import sys
