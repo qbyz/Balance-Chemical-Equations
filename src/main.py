@@ -1,9 +1,15 @@
+import tkinter as tk
+from tkinter import ttk
+from tkinter import font
 from sympy import Matrix, lcm
 from itertools import product
+import time
 
 # ========== Core Logic ==========
 
-def parse_equation(ogString):
+def parse_equation(ogString, race):
+    if race:
+        startTime = time.time()
     sides = ogString.split('=')
     reactants = sides[0].split('+')
     products = sides[1].split('+')
@@ -100,7 +106,7 @@ def parse_equation(ogString):
         if not nullSpace:
             return False
 
-        max_coeff = 10  #Increase if Needed (Uses brute forcing so scales esponentially)
+        max_coeff = 10  # Increase if needed (Brute Forces so try not to)
         for coeffs in product(range(1, max_coeff + 1), repeat=len(nullSpace)):
             # Initialize candidate with the first scaled null space vector
             candidate = coeffs[0] * nullSpace[0]
@@ -146,4 +152,9 @@ def parse_equation(ogString):
     prod_str = "\n".join(f"{k}: {v}" for k, v in mergeDicts(prods).items())
     element_info = f"Reactants:\n{react_str}\n\nProducts:\n{prod_str}"
 
-    return ogString, matrix_str, balanced_eq, element_info
+    if race:
+        endTime = time.time()
+        runTime = endTime-startTime
+    else:
+        runTime = None
+    return ogString, matrix_str, balanced_eq, element_info, runTime, coeffs
