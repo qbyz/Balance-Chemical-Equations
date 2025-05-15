@@ -70,7 +70,7 @@ def race():
     headStart_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
     headStart_slider.setRange(0, 10)
     headStart_slider.setValue(0)
-    headStart_label.setText('Delay: 0')
+    headStart_label.setText('Head Start: 0 Seconds')
     headStart_slider.setMaximumWidth(300)
 
     sliderLayout = QVBoxLayout()
@@ -101,7 +101,7 @@ def race():
     def updateSliderLabel(value):
         nonlocal delay
         delay = value
-        headStart_label.setText(f'Delay: {value}')
+        headStart_label.setText(f'Head Start: {value} Seconds')
 
     headStart_slider.valueChanged.connect(updateSliderLabel)
 
