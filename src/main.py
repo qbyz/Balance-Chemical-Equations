@@ -8,6 +8,9 @@ import time
 # ========== Core Logic ==========
 
 def parse_equation(ogString, race):
+    if '=' not in ogString:
+        return "Invalid Equation (No '=')", "", "Invalid Equation (No '=')", "", "", ""
+        
     if race:
         startTime = time.time()
     sides = ogString.split('=')
