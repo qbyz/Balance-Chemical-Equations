@@ -1,6 +1,3 @@
-import tkinter as tk
-from tkinter import ttk
-from tkinter import font
 from sympy import Matrix, lcm
 from itertools import product
 import time
